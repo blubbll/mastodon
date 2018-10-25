@@ -4,6 +4,11 @@ smc = require('safe-memory-cache')({
     limit: 512
 })
 
+var m = require('module');
+var src = 'exports.check = require instanceof Function';
+var res = require('vm').runInThisContext(m.wrap(src))(exports, require, module, __filename, __dirname);
+console.log(module.exports);
+
 const host = smc.get('host');
 
 /** Mastodon has an API endpoint for instance, which returns all activated users,
