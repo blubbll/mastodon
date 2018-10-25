@@ -4,8 +4,7 @@ smc = require('safe-memory-cache')({
     limit: 512
 })
 
-var host = $.get('host');
-console.log(host)
+
 
 /** Mastodon has an API endpoint for instance, which returns all activated users,
  but no count of all users (unconfirmed as well), so i had to implement this myself*/
