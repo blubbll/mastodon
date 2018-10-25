@@ -1,11 +1,3 @@
-const//imports
-fetch = require('node-fetch'),
-smc = require('safe-memory-cache')({
-    limit: 512
-})
-
-
-
 /** Mastodon has an API endpoint for instance, which returns all activated users,
  but no count of all users (unconfirmed as well), so i had to implement this myself*/
 setTimeout(() => {
