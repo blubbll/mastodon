@@ -1,6 +1,8 @@
 /** Mastodon has an API endpoint for instance, which returns all activated users,
  but no count of all users (unconfirmed as well), so i had to implement this myself*/
 setTimeout(() => {
+    const host = mastoCount.host;
+	const checkInterval = mastCount.interval;
     let reportedCount = 0;
     let checkLatestId = () => {
         fetch(`${host}/api/v1/instance`).then(res => {
