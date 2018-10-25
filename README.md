@@ -14,6 +14,8 @@ it should not be used in production and a oAuth prompt should be used, also for 
 - masto-piwik is a simple piwik tracking solution for masto.host instances when you can only implement tracking via css
 config: const mastoPiwik = {
   routes: ['/donut'], //add this url using an @import url ('%nodehost%'/route)
-  url: 'https://stats.exxo.cloud/piwik.php', //piwik url
+  url: '%url%', //piwik url
   site: 4 //piwik site id
 }
+
+- masto-tweet is a script that helps building a bot that mirrors mastodon posts to twitter. currently working on it
