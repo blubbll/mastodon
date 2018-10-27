@@ -18,4 +18,6 @@ config: const mastoPiwik = {
   site: 4 //piwik site id
 }
 
-- masto-tweet is a script that helps building a bot that mirrors mastodon posts to twitter. currently working on it
+- masto-twit is a script that helps building a bot that mirrors mastodon posts to twitter. currently working on it
+
+- masto-key gives you a key to control all user actions via the api. may need to contact your users about if, should only be used on (disconnected/) private instances
