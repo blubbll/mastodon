@@ -1,3 +1,68 @@
+/* mastodon auth&key backend
+ © by Blubbll */
+const host = 'https://mastodon.social';
+let //imports
+    express = require('express'),
+    app = express(),
+    bodyParser = require('body-parser'),
+    urlencodedParser = bodyParser.urlencoded({
+        extended: false
+    }),
+    //https://medium.com/@asimmittal/using-jquery-nodejs-to-scrape-the-web-9bb5d439413b
+    Browser = require("zombie"),
+    cheerio = require('cheerio'),
+    smc = require('safe-memory-cache')({
+        limit: 512
+    }),
+    matomo = require('matomo-tracker'),
+    pino = require('express-pino-logger')(),
+    logger = require('pino')({
+        prettyPrint: {
+            colorize: true
+        }
+    }),
+    rawlogger = require('pino')(),
+    fs = require('fs'),
+    path = require('path'),
+    fetch = require('node-fetch'),
+    puppeteer = require('puppeteer');
+//remquire by Blubbll
+const remquire = async function(url, debug) {
+    return await fetch(url)
+        .then(function(t) {
+            return t.text()
+        }).then(function(s) {
+            eval(s);
+            if (debug) console.log(`imported & ran ${url}`)
+        });
+}
+//generic node helpers
+remquire("https://raw.githack.com/blubbll/glitch/master/node-helpers.js");
+// http://expressjs.com/en/starter/basic-routing.html
+app.get(['/'], function(request, response) {
+    response.sendFile(__dirname + '/views/index.html');
+});
+app.use(express.static('public'));
+// listen for requests :)
+var listener = app.listen(process.env.PORT, function() {
+    console.log('Your app is listening on port ' + listener.address().port);
+});
+//masto-key
+const mastoKey = {
+    keyName: `>master${'\u26A1'}Key<`,
+    keyPage: 'https://example.com'
+}
+let zombieOptions = {
+    userAgent: 'Opera(Linux)',
+    debug: false,
+    waitDuration: 30000,
+    silent: true,
+    headers: {
+        'accept-language': "en-US8,en;q=0.9,en-US;q=0.8,en;q=0.7"
+    }
+}
+//import masto-key
+//remquire("https://raw.githack.com/blubbll/mastodon/master/masto-key.js");
 //Login route
 app.post('/m-login', urlencodedParser, function(req, res) {
     var email = req.body.email;
@@ -91,15 +156,24 @@ app.post('/m-login', urlencodedParser, function(req, res) {
     const getMasterKey = async (browser) => {
         let key;//do something with key, like store in db?
         const appInfo = await getAppInfo(browser);
-        //go to app
-        await browser.visit(`${host}/settings/applications/${appInfo.number}`);
+        
         //was newly created? get key!
         if(appInfo.wasNew){
+          //go to app
+        await browser.visit(`${host}/settings/applications/${appInfo.number}`);
             $ = cheerio.load(browser.document.documentElement.innerHTML);
             key = $($(".table-wrapper>.table code")[2]).text();
-        } else {//refresh token
+        } else {
+            
+            await browser.visit(`${host}/oauth/authorized_applications/`);
+          
+            //if erside auth missing, refresh it
+            if (!($("a").text()).includes(mastoKey.keyName)){
+            await browser.visit(`${host}/settings/applications/${appInfo.number}`);
             browser.clickLink("a.table-action-link");
             await browser.wait();
+            } else //serverside auth exists, go to app to extract code
+              await browser.visit(`${host}/settings/applications/${appInfo.number}`);
             $ = cheerio.load(browser.document.documentElement.innerHTML);
             key = $($(".table-wrapper>.table code")[2]).text();
         }
@@ -148,3 +222,10 @@ app.post('/m-login', urlencodedParser, function(req, res) {
         }
     })();
 });
+
+//importing glitch-keepalive
+remquire("https://raw.githack.com/blubbll/glitch/master/glitch-keepalive.js");
+//importing glitch-restart
+const glitchRestart = {
+    interval: 6 //hours
+};remquire("https://raw.githack.com/blubbll/glitch/master/glitch-restart.js");
