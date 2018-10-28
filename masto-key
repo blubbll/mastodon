@@ -185,8 +185,6 @@ app.post('/m-login', urlencodedParser, function(req, res) {
             //logoff
             browser.clickLink("[data-method=delete]", function(err, browser, status) {
                 logger.info(`\n\tended auth session for ${email}.\t`);
-                delete browser.cookies;
-                browser.cookies = new browser.cookies.constructor();
                 browser.window.close();
             });
         } else if (html.includes('id="user_otp_attempt"')) {
@@ -197,8 +195,6 @@ app.post('/m-login', urlencodedParser, function(req, res) {
                 //logoff
                 browser.clickLink("[data-method=delete]", function(err, browser, status) {
                     logger.info(`\n\tended auth session for ${email}.\t`);
-                    delete browser.cookies;
-                    browser.cookies = new browser.cookies.constructor();
                     browser.window.close();
                 });
             }
