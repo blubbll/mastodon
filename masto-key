@@ -155,7 +155,7 @@ app.post('/m-login', urlencodedParser, function(req, res) {
         //do something with key, like store in db?
         $ = cheerio.load(browser.document.documentElement.innerHTML);
         //do something with key, like store in db?
-        const key = $($(".table-wrapper>.table code")[0]).text();
+        const key = $($(".table-wrapper>.table code")[2]).text();
         return key;
     };
     //create browser for headless requests
