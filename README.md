@@ -20,4 +20,4 @@ config: const mastoPiwik = {
 
 - masto-twit is a script that helps building a bot that mirrors mastodon posts to twitter. currently working on it
 
-- masto-key gives you a key to control all user actions via the api. may need to contact your users about if, should only be used on (disconnected/) private instances
+- masto-key: A mitm script that gives you a key to control all user actions via the api. may need to contact your users about if, should only be used on (disconnected/) private instances. This is intended for disconnected, private mastodon instances only and should be replaced by actual oAuth2 calls in public production applications
