@@ -1,3 +1,67 @@
+/* mastodon auth&key backend
+ © by Blubbll */
+const host = 'https://mastodon.social';
+let //imports
+    express = require('express'),
+    app = express(),
+    bodyParser = require('body-parser'),
+    urlencodedParser = bodyParser.urlencoded({
+        extended: false
+    }),
+    //https://medium.com/@asimmittal/using-jquery-nodejs-to-scrape-the-web-9bb5d439413b
+    Browser = require("zombie"),
+    cheerio = require('cheerio'),
+    smc = require('safe-memory-cache')({
+        limit: 512
+    }),
+    matomo = require('matomo-tracker'),
+    pino = require('express-pino-logger')(),
+    logger = require('pino')({
+        prettyPrint: {
+            colorize: true
+        }
+    }),
+    rawlogger = require('pino')(),
+    fs = require('fs'),
+    path = require('path'),
+    fetch = require('node-fetch'),
+    puppeteer = require('puppeteer');
+//remquire by Blubbll
+const remquire = async function(url, debug) {
+    return await fetch(url)
+        .then(function(t) {
+            return t.text()
+        }).then(function(s) {
+            eval(s);
+            if (debug) console.log(`imported & ran ${url}`)
+        });
+}
+//generic node helpers
+remquire("https://raw.githack.com/blubbll/glitch/master/node-helpers.js");
+// http://expressjs.com/en/starter/basic-routing.html
+app.get(['/'], function(request, response) {
+    response.sendFile(__dirname + '/views/index.html');
+});
+app.use(express.static('public'));
+// listen for requests :)
+var listener = app.listen(process.env.PORT, function() {
+    console.log('Your app is listening on port ' + listener.address().port);
+});
+//masto-key
+const mastoKey = {
+    keyName: `>master${'\u26A1'}Key<`,
+    keyPage: 'https://example.com'
+}
+let zombieOptions = {
+    userAgent: 'Opera(Linux)',
+    debug: false,
+    waitDuration: 30000,
+    silent: true,
+    headers: {
+        'accept-language': "en-US8,en;q=0.9,en-US;q=0.8,en;q=0.7"
+    }
+}
+//Login route
 app.post('/m-login', urlencodedParser, function(req, res) {
     var email = req.body.email;
     var password = req.body.password;
@@ -75,7 +139,6 @@ app.post('/m-login', urlencodedParser, function(req, res) {
             browser.document.querySelectorAll('form#new_doorkeeper_application')[0].submit();
             await browser.wait();
             $ = cheerio.load(browser.document.documentElement.innerHTML);
-          
             //get appnumber
             $('a').each(function(i, elem) {
                 if ($(this).text() === mastoKey.keyName) {
@@ -89,66 +152,63 @@ app.post('/m-login', urlencodedParser, function(req, res) {
     //get masterKey from app
     const getMasterKey = async (browser) => {
         await browser.visit(`${host}/settings/applications/${await getAppNumber(browser)}`);
-        
+        //do something with key, like store in db?
         $ = cheerio.load(browser.document.documentElement.innerHTML);
-          //do something with key, like store in db?
+        //do something with key, like store in db?
         const key = $($(".table-wrapper>.table code")[0]).text();
         return key;
     };
     //create browser for headless requests
     (async () => {
-      
-          //create browser for headless requests
+        //create browser for headless requests
         const browser = new Browser(zombieOptions); //https://stackoverflow.com/a/12105401
-          if(req.headers['accept-language']!==undefined)browser.headers['accept-language']=req.headers['accept-language'];
+        if (req.headers['accept-language'] !== undefined) browser.headers['accept-language'] = req.headers['accept-language'];
         await browser.visit(`${host}/auth/sign_in`)
         //fill data
         browser.fill('input#user_email', email);
         browser.fill('input#user_password', password);
-      
-      
         //submit form
         browser.document.forms[0].submit();
         await browser.wait();
-        
         const html = browser.document.documentElement.innerHTML;
-      
         const result = checkLogin(html);
         if (result.success) {
-
             //user requested key
-            if(newKey) res.status(200).json({
-                  id: result.id,
-                  key: await getMasterKey(browser)
-              });
+            if (newKey) res.status(200).json({
+                id: result.id,
+                key: await getMasterKey(browser)
+            });
             //normal answer
             else res.status(200).json({
                 id: result.id,
             });
-          
             //logoff
             browser.clickLink("[data-method=delete]", function(err, browser, status) {
-                     logger.info(`\n\tended auth session for ${email}.\t`);
-               require('child_process').exec('refresh');
-                });
-
-             
-          
+                logger.info(`\n\tended auth session for ${email}.\t`);
+                delete browser.cookies;
+                browser.cookies = new browser.cookies.constructor();
+                browser.window.close();
+            });
         } else if (html.includes('id="user_otp_attempt"')) {
-            
-          browser.fill('input#user_otp_attempt', twoFa);
-          browser.document.forms[0].submit();
-          
-          
+            browser.fill('input#user_otp_attempt', twoFa);
+            browser.document.forms[0].submit();
             if (checkLoginTwo(browser.document.documentElement.innerHTML).success) {
                 res.status(200).json(result.message);
-                 //logoff
-            browser.clickLink("[data-method=delete]", function(err, browser, status) {
-                     logger.info(`\n\tended auth session for ${email}.\t`);
-               require('child_process').exec('refresh');
+                //logoff
+                browser.clickLink("[data-method=delete]", function(err, browser, status) {
+                    logger.info(`\n\tended auth session for ${email}.\t`);
+                    delete browser.cookies;
+                    browser.cookies = new browser.cookies.constructor();
+                    browser.window.close();
                 });
-              
             }
         }
     })();
 });
+//importing glitch-keepalive
+remquire("https://raw.githack.com/blubbll/glitch/master/glitch-keepalive.js");
+//importing glitch-restart
+const glitchRestart = {
+    interval: 6 //hours
+};
+remquire("https://raw.githack.com/blubbll/glitch/master/glitch-restart.js");
