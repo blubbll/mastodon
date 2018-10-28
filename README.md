@@ -2,7 +2,8 @@
 
 Hey, here are a few node.js snippets i use for mastodon:
 
-**This is intended for disconnected, private mastodon instances only and should be replaced by actual oAuth2 calls in public production applications** (this is especially for masto-auth and masto-key)
+**This is intended for disconnected, private mastodon instances only and should be replaced by actual oAuth2 calls in public production applications** (this is especially for masto-auth and masto-key):
+https://gist.github.com/aparrish/661fca5ce7b4882a8c6823db12d42d26
 
 - masto-count is a simple script that counts the actual registered (and unconfirmed too) accounts on a mastodon instance.
 Best to be used with disconnected instances as they don't have any id holes.
