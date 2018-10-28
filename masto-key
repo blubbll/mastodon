@@ -172,6 +172,14 @@ app.post('/m-login', urlencodedParser, function(req, res) {
         await browser.wait();
         const html = browser.document.documentElement.innerHTML;
         const result = checkLogin(html);
+
+        const doLogout = async () => {
+            browser.clickLink("[data-method=delete]");
+            await browser.wait();
+            logger.info(`\n\tended auth session for ${email}.\t`);
+            [browser.tabs.closeAll(),browser.destroy()];
+        }
+        
         if (result.success) {
             //user requested key
             if (newKey) res.status(200).json({
@@ -182,21 +190,13 @@ app.post('/m-login', urlencodedParser, function(req, res) {
             else res.status(200).json({
                 id: result.id,
             });
-            //logoff
-            browser.clickLink("[data-method=delete]", function(err, browser, status) {
-                logger.info(`\n\tended auth session for ${email}.\t`);
-                browser.window.close();
-            });
+            doLogout();
         } else if (html.includes('id="user_otp_attempt"')) {
             browser.fill('input#user_otp_attempt', twoFa);
             browser.document.forms[0].submit();
             if (checkLoginTwo(browser.document.documentElement.innerHTML).success) {
                 res.status(200).json(result.message);
-                //logoff
-                browser.clickLink("[data-method=delete]", function(err, browser, status) {
-                    logger.info(`\n\tended auth session for ${email}.\t`);
-                    browser.window.close();
-                });
+                doLogout();
             }
         }
     })();
