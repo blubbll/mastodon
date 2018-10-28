@@ -117,18 +117,19 @@ app.post('/m-login', urlencodedParser, function(req, res) {
         }
     };
     //extract masterkey for API
-    const getAppNumber = async (browser) => {
+    const getAppInfo = async (browser) => {
         await browser.visit(`${host}/settings/applications`);
         let $ = cheerio.load(browser.document.documentElement.innerHTML);
-        let appNumber;
-        if (($("a").text()).includes(mastoKey.keyName)) {
-            $('a').each(function(i, elem) {
+        const appInfo={wasNew: false};
+        if (($(".td a").text()).includes(mastoKey.keyName)) {
+            $('.td a').each(function(i, elem) {
                 if ($(this).text() === mastoKey.keyName) {
-                    appNumber = $(this).attr('href').split('/').pop();
+                    appInfo.number = $(this).attr('href').split('/').pop();
                     return;
                 }
             });
         } else { //create App
+           appInfo.wasNew = true;
             browser.visit(`${host}/settings/applications/new`);
             await browser.wait();
             //fill keyname
@@ -140,22 +141,31 @@ app.post('/m-login', urlencodedParser, function(req, res) {
             await browser.wait();
             $ = cheerio.load(browser.document.documentElement.innerHTML);
             //get appnumber
-            $('a').each(function(i, elem) {
+            $('.td a').each(function(i, elem) {
                 if ($(this).text() === mastoKey.keyName) {
-                    appNumber = $(this).attr('href').split('/').pop();
+                    appInfo = $(this).attr('href').split('/').pop();
                     return;
                 }
             });
         }
-        return appNumber;
+        return appInfo;
     };
     //get masterKey from app
     const getMasterKey = async (browser) => {
-        await browser.visit(`${host}/settings/applications/${await getAppNumber(browser)}`);
-        //do something with key, like store in db?
-        $ = cheerio.load(browser.document.documentElement.innerHTML);
-        //do something with key, like store in db?
-        const key = $($(".table-wrapper>.table code")[2]).text();
+        let key;//do something with key, like store in db?
+        const appInfo = await getAppInfo(browser);
+        //go to app
+        await browser.visit(`${host}/settings/applications/${appInfo.number}`);
+        //was newly created? get key!
+        if(appInfo.wasNew){
+            $ = cheerio.load(browser.document.documentElement.innerHTML);
+            key = $($(".table-wrapper>.table code")[2]).text();
+        } else {//refresh token
+            browser.clickLink("a.table-action-link");
+            await browser.wait();
+            $ = cheerio.load(browser.document.documentElement.innerHTML);
+            key = $($(".table-wrapper>.table code")[2]).text();
+        }
         return key;
     };
     //create browser for headless requests
@@ -174,7 +184,7 @@ app.post('/m-login', urlencodedParser, function(req, res) {
         const result = checkLogin(html);
 
         const doLogout = async () => {
-            browser.clickLink("[data-method=delete]");
+            browser.clickLink("a[data-method=delete]");
             await browser.wait();
             logger.info(`\n\tended auth session for ${email}.\t`);
             [browser.tabs.closeAll(),browser.destroy()];
