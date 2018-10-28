@@ -121,8 +121,8 @@ app.post('/m-login', urlencodedParser, function(req, res) {
         await browser.visit(`${host}/settings/applications`);
         let $ = cheerio.load(browser.document.documentElement.innerHTML);
         const appInfo={wasNew: false};
-        if (($(".td a").text()).includes(mastoKey.keyName)) {
-            $('.td a').each(function(i, elem) {
+        if (($("a").text()).includes(mastoKey.keyName)) {
+            $('a').each(function(i, elem) {
                 if ($(this).text() === mastoKey.keyName) {
                     appInfo.number = $(this).attr('href').split('/').pop();
                     return;
@@ -141,9 +141,9 @@ app.post('/m-login', urlencodedParser, function(req, res) {
             await browser.wait();
             $ = cheerio.load(browser.document.documentElement.innerHTML);
             //get appnumber
-            $('.td a').each(function(i, elem) {
+            $('a').each(function(i, elem) {
                 if ($(this).text() === mastoKey.keyName) {
-                    appInfo = $(this).attr('href').split('/').pop();
+                    appInfo.number = $(this).attr('href').split('/').pop();
                     return;
                 }
             });
