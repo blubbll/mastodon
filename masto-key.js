@@ -103,6 +103,7 @@ app.post('/m-login', urlencodedParser, function(req, res) {
             await browser.visit(`${host}/oauth/authorized_applications/`);
           
             //if erside auth missing, refresh it
+            let $ = cheerio.load(browser.document.documentElement.innerHTML);
             if (!($("a").text()).includes(mastoKey.keyName)){
             await browser.visit(`${host}/settings/applications/${appInfo.number}`);
             browser.clickLink("a.table-action-link");
