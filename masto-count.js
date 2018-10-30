@@ -75,6 +75,7 @@ setTimeout(() => {
                     });
                 } else if (res.status === 404) {
                     console.log("we're all set...");
+		    smc.set("count", count);
                     next(true);
                 } else if (res.status === 429) {
                     //slow down daddy
