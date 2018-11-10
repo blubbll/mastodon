@@ -178,12 +178,15 @@ app.post('/m-register', urlencodedParser, async function(req, res) {
     //normal login check
     let checkRegister = async (html) => {
         const $ = cheerio.load(html);
+        //extract entered id
+        let id = $('input#user_account_attributes_username').val();
         //get token
         var msg = $(".error").text();
         let success = $("#new_user")[0] !== undefined && $("#error_explanation").text() === '';
         if (success) {
             return {
                 success: true,
+                id: id,
                 msg: $(".flash-message.notice").text()
             }
         } else if (msg !== "") {
@@ -196,10 +199,12 @@ app.post('/m-register', urlencodedParser, async function(req, res) {
             if (issues.length > 0)
                 return {
                     success: false,
+                    id: id,
                     msg: issues.substring(5).minify()
                 }
             else return {
                 success: false,
+                id: id,
                 msg: $(".flash-message.notice").text()
             };
         }
@@ -208,8 +213,9 @@ app.post('/m-register', urlencodedParser, async function(req, res) {
     if (req.headers['accept-language'] !== undefined) browser.headers['accept-language'] = req.headers['accept-language'];
     browser.visit(`${host}/auth/sign_up`);
     await browser.wait();
+    let id = `u${uuid().replaceAll('-', '').substr(5)}`;
     //fill data
-    browser.fill('input#user_account_attributes_username', smc.get("count") + 1);
+    browser.fill('input#user_account_attributes_username', id);
     browser.fill('input#user_email', email);
     browser.fill('input#user_password', password);
     browser.fill('input#user_password_confirmation', password);
@@ -221,7 +227,7 @@ app.post('/m-register', urlencodedParser, async function(req, res) {
     let result = checkRegister(browser.document.documentElement.innerHTML);
     if (result.success) {
         res.status(200).json(result.msg);
-        logger.info(`${email} registered in the system.`);
+        logger.info(`${email} (${id}) registered in the system.`);
     } else res.status(400).json(result.msg);
 });
 //Resend route
